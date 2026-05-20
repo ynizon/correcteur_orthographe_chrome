@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Correcteur Gemini Nano",
+  "version": "1.0",
+  "author": "Yohann Nizon",
+  "homepage_url": "https://www.gameandme.fr",
+  "description": "Corrige automatiquement l'orthographe via Gemini Nano dans les textareas.",
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["style.css"],
+      "world": "MAIN"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+.gemini-btn-container {
+  position: absolute;
+  z-index: 999999;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.gemini-btn {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+  height: 28px;
+  font-family: sans-serif;
+}
+
+.gemini-ai-btn {
+  border-color: #4285f4;
+  color: #4285f4;
+  font-weight: bold;
+}
+
+.gemini-ai-btn:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+}
+
+.gemini-toggle-btn {
+  border-color: #f29900;
+  color: #f29900;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  min-width: 50px;
+}
+
+.gemini-toggle-btn:hover {
+  background: #fff4e5;
+  border-color: #e37d00;
+}
+
+.gemini-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gemini-stats {
+  position: absolute;
+  z-index: 999999;
+  font-family: sans-serif;
+  font-size: 11px;
+  color: #1a73e8;
+  background: #e8f0fe;
+  padding: 2px 8px;
+  border-radius: 0 0 4px 4px;
+  border: 1px solid #4285f4;
+  border-top: none;
+  pointer-events: none;
+  box-sizing: border-box;
+}
