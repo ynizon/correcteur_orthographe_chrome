@@ -1,6 +1,36 @@
 console.log("🔍 Gemini Correcteur : Mode Dual-Button activé");
 
+let isEnabled = true;
 const originalTexts = new Map();
+
+// Initialisation de l'état
+chrome.storage.local.get('enabled', (result) => {
+  isEnabled = result.enabled !== false;
+  if (isEnabled) {
+    injectButtons();
+  } else {
+    removeButtons();
+  }
+});
+
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.enabled) {
+    isEnabled = changes.enabled.newValue;
+    if (isEnabled) {
+      injectButtons();
+    } else {
+      removeButtons();
+    }
+  }
+});
+
+function removeButtons() {
+  document.querySelectorAll('.gemini-btn-container, .gemini-stats').forEach(el => el.remove());
+  document.querySelectorAll('textarea').forEach(textarea => {
+    delete textarea.dataset.geminiId;
+    delete textarea.dataset.geminiStatsId;
+  });
+}
 
 // Icône de l'extension (Dictionnaire PNG base64)
 const DICTIONARY_ICON = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABz0lEQVR4nO3cMU7cQBiAUTZKBweIlNuEK6WCOnQ5EpwjJ0iZCuqkShMtEUI747G/98otMPJ8/B683r26AgAAAAAAAAAAAI7gNOtAX749/551rNX9+PV89vWf3z9NW4+/Po4+gIVf24eRP9zir29YABZ/H4YEYPHfZ4vzNnwP8K/Hu+vZh1zO56/nN4FbuPgEeK3ix7tri/8Gs6fA0E0g65sSgL/8dZkAcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxE1/JOx/bh9etv4VLmYvz0CYAHECiBNA3FJ7gL1cN4/EBIgTQJwA4gQQJ4A4AcQJIE4AcQKIE0DcUreCvR08nwkQJ4A4AcQttQfYy3XzSEyAOAHECSBOAHECiBNAnADiBBAngDgBxC11K3jLt4Ort6FNgDgBxAkgbqk9QPU6vCUTIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcRNCeBI3wF8NCZA3MUDeLq/OZ17/fbhxSR4g9fO3yjTPxsogrUMuQTMrvgotjhvw/YAItiHoZtAEaxv+H8BT/c3JyEAAAAAAAAAAMAkfwBaSz9XyzzNhAAAAABJRU5ErkJggg==`;
@@ -83,6 +113,7 @@ function handleAIAction(textarea, aiBtn, toggleBtn, statsDiv) {
 }
 
 function injectButtons() {
+  if (!isEnabled) return;
   document.querySelectorAll('textarea').forEach(textarea => {
     const containerId = textarea.dataset.geminiId;
     const statsId = textarea.dataset.geminiStatsId;

@@ -12,12 +12,17 @@
     "128": "icon.png"
   },
   "permissions": ["storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Désactiver le Correcteur Gemini"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "css": ["style.css"],
-      "world": "MAIN"
+      "css": ["style.css"]
     }
   ]
 }
