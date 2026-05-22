@@ -26,9 +26,15 @@ chrome.storage.onChanged.addListener((changes) => {
 
 function removeButtons() {
   document.querySelectorAll('.gemini-btn-container, .gemini-stats').forEach(el => el.remove());
-  document.querySelectorAll('textarea').forEach(textarea => {
-    delete textarea.dataset.geminiId;
-    delete textarea.dataset.geminiStatsId;
+  document.querySelectorAll('textarea, [contenteditable="true"]').forEach(el => {
+    delete el.dataset.geminiId;
+    delete el.dataset.geminiStatsId;
+    delete el.dataset.geminiCorrected;
+    
+    if (el._geminiResizeObserver) {
+      el._geminiResizeObserver.disconnect();
+      delete el._geminiResizeObserver;
+    }
   });
 }
 
@@ -40,10 +46,10 @@ async function getGeminiResponse(text) {
     let modelFactory = window.ai?.languageModel || navigator.ai?.languageModel || (typeof LanguageModel !== 'undefined' ? LanguageModel : null);
     if (!modelFactory) return null;
     const session = await modelFactory.create({
-      systemPrompt: "Tu es un correcteur d'orthographe et de grammaire. Ta mission est de corriger le texte fourni. Tu dois impérativement renvoyer UNIQUEMENT le texte corrigé. Conserve exactement la même structure que l'original : ne rajoute aucun saut de ligne et n'en supprime aucun. Chaque ligne de l'original doit correspondre à une ligne dans ta réponse. Pas de commentaires, pas de préambule, pas de gras."
+      systemPrompt: "Tu es un correcteur d'orthographe, de grammaire et de typographie. Ta mission est de corriger le texte fourni en veillant impérativement à ajouter une majuscule en début de chaque phrase et la ponctuation finale nécessaire (comme un point) si elle est manquante. Tu dois renvoyer UNIQUEMENT le texte corrigé. Conserve exactement la même structure que l'original : ne rajoute aucun saut de ligne et n'en supprime aucun. Chaque ligne de l'original doit correspondre à une ligne dans ta réponse. Pas de commentaires, pas de préambule, pas de gras."
     });
 
-    const prompt = `Corrige ce texte en gardant les sauts de ligne exactement aux mêmes endroits : "${text}"`;
+    const prompt = `Corrige l'orthographe, la grammaire, la typographie (majuscules en début de phrase et ponctuation de fin de phrase manquante) de ce texte en gardant les sauts de ligne exactement aux mêmes endroits : "${text}"`;
     const result = await session.prompt(prompt);
     if (session.destroy) session.destroy();
     return result.trim()
@@ -57,18 +63,102 @@ async function getGeminiResponse(text) {
   }
 }
 
-function positionButtons(textarea, container, statsDiv) {
-  const rect = textarea.getBoundingClientRect();
-  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+function getElementText(el) {
+  if (el.tagName === 'TEXTAREA') {
+    return el.value;
+  }
+  return getTextFromContentEditable(el);
+}
+
+function getTextFromContentEditable(el) {
+  function walk(node) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.getAttribute('contenteditable') === 'false') {
+        return '';
+      }
+      if (node.tagName === 'BR') {
+        return '\n';
+      }
+    }
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.nodeValue;
+    }
+    
+    let text = '';
+    let isBlock = false;
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const display = window.getComputedStyle(node).display;
+      if (display === 'block' || node.tagName === 'DIV' || node.tagName === 'P') {
+        isBlock = true;
+      }
+    }
+    
+    for (let child of node.childNodes) {
+      text += walk(child);
+    }
+    
+    if (isBlock && text && !text.endsWith('\n')) {
+      text += '\n';
+    }
+    
+    return text;
+  }
   
-  container.style.left = (rect.right + scrollLeft - 70) + 'px';
-  container.style.top = (rect.top + scrollTop + 5) + 'px';
+  return walk(el).trim();
+}
+
+function setElementText(el, text) {
+  if (el.tagName === 'TEXTAREA') {
+    el.value = text;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    el.focus();
+    try {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      if (!document.execCommand('insertText', false, text)) {
+        el.innerText = text;
+      }
+    } catch (e) {
+      console.error("Gemini Correcteur - Erreur lors de l'écriture dans le contenteditable :", e);
+      el.innerText = text;
+    }
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+function positionButtons(el, container, statsDiv) {
+  const parent = el.parentElement;
+  if (!parent) return;
+
+  const parentStyle = window.getComputedStyle(parent);
+  if (parentStyle.position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  const rect = el.getBoundingClientRect();
+  const parentRect = parent.getBoundingClientRect();
+  
+  const top = rect.top - parentRect.top;
+  const right = parentRect.right - rect.right;
+  const left = rect.left - parentRect.left;
+  const width = rect.width;
+  const height = rect.height;
+  
+  // Annuler toute propriété 'left' définie précédemment pour éviter les conflits
+  container.style.left = 'auto';
+  // Aligner précisément le conteneur à 8px du bord droit de l'élément cible
+  container.style.right = (right + 8) + 'px';
+  container.style.top = (top + 5) + 'px';
 
   if (statsDiv) {
-    statsDiv.style.left = (rect.left + scrollLeft) + 'px';
-    statsDiv.style.top = (rect.bottom + scrollTop + 2) + 'px';
-    statsDiv.style.width = rect.width + 'px';
+    statsDiv.style.left = left + 'px';
+    statsDiv.style.top = (top + height + 2) + 'px';
+    statsDiv.style.width = width + 'px';
   }
 }
 
@@ -83,11 +173,11 @@ function countMistakes(original, corrected) {
   return mistakes;
 }
 
-function handleAIAction(textarea, aiBtn, toggleBtn, statsDiv) {
-  const text = textarea.value.trim();
+function handleAIAction(el, aiBtn, toggleBtn, statsDiv) {
+  const text = getElementText(el);
   if (!text) return;
 
-  originalTexts.set(textarea, textarea.value);
+  originalTexts.set(el, text);
   const originalLabel = aiBtn.innerHTML;
   aiBtn.innerHTML = '...';
   aiBtn.disabled = true;
@@ -98,7 +188,7 @@ function handleAIAction(textarea, aiBtn, toggleBtn, statsDiv) {
 
     if (corrected && corrected.toLowerCase() !== text.toLowerCase()) {
       const mistakes = countMistakes(text, corrected);
-      textarea.value = corrected;
+      setElementText(el, corrected);
       
       // Configuration du bouton Toggle
       toggleBtn.style.display = 'flex';
@@ -108,31 +198,39 @@ function handleAIAction(textarea, aiBtn, toggleBtn, statsDiv) {
       statsDiv.innerHTML = `${mistakes} faute${mistakes > 1 ? 's' : ''} corrigée${mistakes > 1 ? 's' : ''}`;
       statsDiv.style.display = 'block';
       statsDiv.style.opacity = '1';
+      
+      // Repositionner les boutons après modification de la hauteur du contenu
+      positionButtons(el, toggleBtn.parentElement, statsDiv);
     }
   });
 }
 
 function injectButtons() {
   if (!isEnabled) return;
-  document.querySelectorAll('textarea').forEach(textarea => {
-    const containerId = textarea.dataset.geminiId;
-    const statsId = textarea.dataset.geminiStatsId;
+  document.querySelectorAll('textarea, [contenteditable="true"]').forEach(el => {
+    // Ignorer les éléments internes de notre propre interface
+    if (el.classList.contains('gemini-btn') || el.classList.contains('gemini-stats') || el.classList.contains('gemini-btn-container')) {
+      return;
+    }
+
+    const containerId = el.dataset.geminiId;
+    const statsId = el.dataset.geminiStatsId;
 
     if (containerId && statsId) {
       const existingContainer = document.getElementById(containerId);
       const existingStats = document.getElementById(statsId);
       if (existingContainer && existingStats) {
-        positionButtons(textarea, existingContainer, existingStats);
+        positionButtons(el, existingContainer, existingStats);
       }
       return;
     }
 
-    if (textarea.offsetWidth === 0) return;
+    if (el.offsetWidth === 0) return;
 
     const id = 'gemini-container-' + Math.random().toString(36).substr(2, 9);
     const sid = 'gemini-stats-' + Math.random().toString(36).substr(2, 9);
-    textarea.dataset.geminiId = id;
-    textarea.dataset.geminiStatsId = sid;
+    el.dataset.geminiId = id;
+    el.dataset.geminiStatsId = sid;
 
     const container = document.createElement('div');
     container.id = id;
@@ -158,38 +256,53 @@ function injectButtons() {
 
     toggleBtn.onclick = (e) => {
       e.preventDefault();
-      const currentText = textarea.value;
-      const originalText = originalTexts.get(textarea);
+      const currentText = getElementText(el);
+      const originalText = originalTexts.get(el);
       
       if (toggleBtn.innerHTML === 'Avant') {
         // On stocke la version corrigée avant de remettre l'originale
-        textarea.dataset.geminiCorrected = currentText;
-        textarea.value = originalText;
+        el.dataset.geminiCorrected = currentText;
+        setElementText(el, originalText);
         toggleBtn.innerHTML = 'Après';
         toggleBtn.title = 'Voir la version corrigée';
         statsDiv.style.display = 'none'; // Cache les stats en mode "Avant"
       } else {
-        textarea.value = textarea.dataset.geminiCorrected;
+        setElementText(el, el.dataset.geminiCorrected);
         toggleBtn.innerHTML = 'Avant';
         toggleBtn.title = 'Voir la version originale';
         statsDiv.style.display = 'block'; // Réaffiche les stats en mode "Après"
       }
+      
+      // Repositionner les boutons après modification de la hauteur
+      positionButtons(el, container, statsDiv);
     };
 
     aiBtn.onclick = (e) => {
       e.preventDefault();
-      handleAIAction(textarea, aiBtn, toggleBtn, statsDiv);
+      handleAIAction(el, aiBtn, toggleBtn, statsDiv);
     };
 
     container.appendChild(toggleBtn);
     container.appendChild(aiBtn);
-    document.body.appendChild(container);
-    document.body.appendChild(statsDiv);
     
-    positionButtons(textarea, container, statsDiv);
+    const parent = el.parentElement;
+    if (parent) {
+      parent.appendChild(container);
+      parent.appendChild(statsDiv);
+      
+      positionButtons(el, container, statsDiv);
 
-    window.addEventListener('scroll', () => positionButtons(textarea, container, statsDiv), { passive: true });
-    window.addEventListener('resize', () => positionButtons(textarea, container, statsDiv), { passive: true });
+      // Utiliser ResizeObserver pour adapter dynamiquement la position et taille lors du redimensionnement
+      try {
+        const resizeObserver = new ResizeObserver(() => {
+          positionButtons(el, container, statsDiv);
+        });
+        resizeObserver.observe(el);
+        el._geminiResizeObserver = resizeObserver;
+      } catch (e) {
+        window.addEventListener('resize', () => positionButtons(el, container, statsDiv), { passive: true });
+      }
+    }
   });
 }
 
