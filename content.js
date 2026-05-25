@@ -4,7 +4,7 @@ let isEnabled = true;
 const originalTexts = new Map();
 
 // Initialisation de l'état
-chrome.storage.local.get('enabled', (result) => {
+chrome.storage.local.get('enabled').then((result) => {
   isEnabled = result.enabled !== false;
   if (isEnabled) {
     injectButtons();

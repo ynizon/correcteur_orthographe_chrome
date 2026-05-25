@@ -6,6 +6,7 @@
 
 **Correcteur Gemini Nano** est une extension de navigateur moderne qui intègre l'intelligence artificielle directement dans vos champs de saisie. Elle utilise **Gemini Nano**, le modèle de langage ultra-léger de Google, s'exécutant localement dans votre navigateur pour une correction orthographique et grammaticale instantanée et privée.
 
+<img src="screenshot.png">
 ---
 
 ## ✨ Points Forts
