@@ -208,6 +208,26 @@ function handleAIAction(el, aiBtn, toggleBtn, statsDiv) {
 function injectButtons() {
   if (!isEnabled) return;
   document.querySelectorAll('textarea, [contenteditable="true"]').forEach(el => {
+    // Ne pas afficher si l'attribut name est 'q'
+    if (el.getAttribute('name') === 'q') {
+      const containerId = el.dataset.geminiId;
+      const statsId = el.dataset.geminiStatsId;
+      if (containerId) {
+        document.getElementById(containerId)?.remove();
+        delete el.dataset.geminiId;
+      }
+      if (statsId) {
+        document.getElementById(statsId)?.remove();
+        delete el.dataset.geminiStatsId;
+      }
+      delete el.dataset.geminiCorrected;
+      if (el._geminiResizeObserver) {
+        el._geminiResizeObserver.disconnect();
+        delete el._geminiResizeObserver;
+      }
+      return;
+    }
+
     // Ignorer les éléments internes de notre propre interface
     if (el.classList.contains('gemini-btn') || el.classList.contains('gemini-stats') || el.classList.contains('gemini-btn-container')) {
       return;
