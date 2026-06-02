@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
           currentDomainText.textContent = currentHostname;
         } else {
           currentHostname = '';
-          currentDomainText.textContent = 'Non disponible (Page système)';
+          currentDomainText.textContent = 'Non disponible (Page syst\u00e8me)';
           toggleCurrentSiteBtn.disabled = true;
           toggleCurrentSiteBtn.style.opacity = '0.5';
           toggleCurrentSiteBtn.style.cursor = 'not-allowed';
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       blacklistBtn.setAttribute('aria-checked', 'false');
       
       exceptionsTitle.textContent = 'Exceptions (Liste blanche)';
-      emptyStateText.textContent = 'Aucun site n\'est autorisé pour le moment. L\'extension est inactive partout.';
+      emptyStateText.textContent = 'Aucun site n\'est autoris\u00e9 pour le moment. L\'extension est inactive partout.';
     }
 
     // 2. Déterminer l'état du site actuel
@@ -107,12 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isActive) {
         currentStatusIndicator.className = 'status-indicator active';
         currentStatusText.textContent = 'Actif';
-        toggleBtnIcon.textContent = '🚫';
-        toggleBtnText.textContent = 'Désactiver sur ce site';
+        toggleBtnIcon.textContent = '\ud83d\udeab';
+        toggleBtnText.textContent = 'D\u00e9sactiver sur ce site';
       } else {
         currentStatusIndicator.className = 'status-indicator inactive';
-        currentStatusText.textContent = 'Désactivé';
-        toggleBtnIcon.textContent = '✨';
+        currentStatusText.textContent = 'D\u00e9sactiv\u00e9';
+        toggleBtnIcon.textContent = '\u2728';
         toggleBtnText.textContent = 'Activer sur ce site';
       }
       toggleCurrentSiteBtn.disabled = false;
@@ -137,12 +137,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filteredDomains.length === 0) {
       emptyState.style.display = 'flex';
       if (query) {
-        emptyStateText.textContent = 'Aucun résultat trouvé pour votre recherche.';
+        emptyStateText.textContent = 'Aucun r\u00e9sultat trouv\u00e9 pour votre recherche.';
       } else {
         if (extensionMode === 'blacklist') {
           emptyStateText.textContent = 'Aucun site n\'est exclu. L\'extension est active partout.';
         } else {
-          emptyStateText.textContent = 'Aucun site n\'est autorisé. L\'extension est inactive partout.';
+          emptyStateText.textContent = 'Aucun site n\'est autoris\u00e9. L\'extension est inactive partout.';
         }
       }
     } else {
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await chrome.storage.local.set({ domains: excludedDomains });
       renderUI();
     } else {
-      alert("Ce domaine est déjà enregistré.");
+      alert("Ce domaine est d\u00e9j\u00e0 enregistr\u00e9.");
     }
   }
 

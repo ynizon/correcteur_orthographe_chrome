@@ -1,4 +1,4 @@
-console.log("🔍 Gemini Correcteur : Mode Dual-Button activé");
+console.log("\ud83d\udd0d Gemini Correcteur : Mode Dual-Button activ\u00e9");
 
 let isEnabled = false;
 const originalTexts = new Map();
@@ -74,23 +74,42 @@ function removeButtons() {
 const DICTIONARY_ICON = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABz0lEQVR4nO3cMU7cQBiAUTZKBweIlNuEK6WCOnQ5EpwjJ0iZCuqkShMtEUI747G/98otMPJ8/B683r26AgAAAAAAAAAAAI7gNOtAX749/551rNX9+PV89vWf3z9NW4+/Po4+gIVf24eRP9zir29YABZ/H4YEYPHfZ4vzNnwP8K/Hu+vZh1zO56/nN4FbuPgEeK3ix7tri/8Gs6fA0E0g65sSgL/8dZkAcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxE1/JOx/bh9etv4VLmYvz0CYAHECiBNA3FJ7gL1cN4/EBIgTQJwA4gQQJ4A4AcQJIE4AcQKIE0DcUreCvR08nwkQJ4A4AcQttQfYy3XzSEyAOAHECSBOAHECiBNAnADiBBAngDgBxC11K3jLt4Ort6FNgDgBxAkgbqk9QPU6vCUTIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcRNCeBI3wF8NCZA3MUDeLq/OZ17/fbhxSR4g9fO3yjTPxsogrUMuQTMrvgotjhvw/YAItiHoZtAEaxv+H8BT/c3JyEAAAAAAAAAAMAkfwBaSz9XyzzNhAAAAABJRU5ErkJggg==`;
 
 async function getGeminiResponse(text) {
+  if (!text) return text;
+  
   try {
     let modelFactory = window.ai?.languageModel || navigator.ai?.languageModel || (typeof LanguageModel !== 'undefined' ? LanguageModel : null);
     if (!modelFactory) return null;
+    
     const session = await modelFactory.create({
-      systemPrompt: "Tu es un correcteur d'orthographe, de grammaire et de typographie. Ta mission est de corriger le texte fourni en veillant impérativement à ajouter une majuscule en début de chaque phrase et la ponctuation finale nécessaire (comme un point) si elle est manquante. Tu dois renvoyer UNIQUEMENT le texte corrigé. Conserve exactement la même structure que l'original : ne rajoute aucun saut de ligne et n'en supprime aucun. Chaque ligne de l'original doit correspondre à une ligne dans ta réponse. Pas de commentaires, pas de préambule, pas de gras."
+      systemPrompt: "Tu es un correcteur d'orthographe, de grammaire et de typographie. Ta mission est de corriger le texte fourni en veillant imp\u00e9rativement \u00e0 ajouter une majuscule en d\u00e9but de phrase et la ponctuation finale n\u00e9cessaire (comme un point) si elle est manquante. Tu dois renvoyer UNIQUEMENT le texte corrig\u00e9, sur une seule ligne. Aucun saut de ligne, aucun commentaire, aucun pr\u00e9ambule, aucun gras."
     });
 
-    const prompt = `Corrige l'orthographe, la grammaire, la typographie (majuscules en début de phrase et ponctuation de fin de phrase manquante) de ce texte en gardant les sauts de ligne exactement aux mêmes endroits : "${text}"`;
-    const result = await session.prompt(prompt);
+    const lines = text.split('\n');
+    const correctedLines = [];
+
+    for (const line of lines) {
+      if (line.trim() === '') {
+        // Preserver exactement les lignes vides sans appeler l'IA
+        correctedLines.push(line);
+      } else {
+        const prompt = `Corrige l'orthographe, la grammaire et la typographie de ce texte, et renvoie uniquement la correction sur une seule ligne : "${line}"`;
+        const result = await session.prompt(prompt);
+        const cleanedResult = result.trim()
+          .replace(/^\*\*.*?\*\*\s*/i, '')
+          .replace(/^Voici la version corrig\u00e9e\s*:\s*/i, '')
+          .replace(/^Version corrig\u00e9e\s*:\s*/i, '')
+          .replace(/^"(.*)"$/, '$1')
+          .replace(/\r?\n/g, ' ') // Securite pour supprimer tout retour chariot
+          .trim();
+        
+        correctedLines.push(cleanedResult);
+      }
+    }
+
     if (session.destroy) session.destroy();
-    return result.trim()
-      .replace(/^\*\*.*?\*\*\s*/i, '')
-      .replace(/^Voici la version corrigée\s*:\s*/i, '')
-      .replace(/^Version corrigée\s*:\s*/i, '')
-      .replace(/^"(.*)"$/, '$1')
-      .trim();
+    return correctedLines.join('\n');
   } catch (err) {
+    console.error("Gemini Correcteur - Erreur lors de la correction :", err);
     return null;
   }
 }
@@ -156,7 +175,7 @@ function setElementText(el, text) {
         el.innerText = text;
       }
     } catch (e) {
-      console.error("Gemini Correcteur - Erreur lors de l'écriture dans le contenteditable :", e);
+      console.error("Gemini Correcteur - Erreur lors de l'\u00e9criture dans le contenteditable :", e);
       el.innerText = text;
     }
     el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -227,7 +246,7 @@ function handleAIAction(el, aiBtn, toggleBtn, statsDiv) {
       toggleBtn.innerHTML = 'Avant';
       toggleBtn.title = 'Voir la version originale';
       
-      statsDiv.innerHTML = `${mistakes} faute${mistakes > 1 ? 's' : ''} corrigée${mistakes > 1 ? 's' : ''}`;
+      statsDiv.innerHTML = `${mistakes} faute${mistakes > 1 ? 's' : ''} corrig\u00e9e${mistakes > 1 ? 's' : ''}`;
       statsDiv.style.display = 'block';
       statsDiv.style.opacity = '1';
       
@@ -315,8 +334,8 @@ function injectButtons() {
         // On stocke la version corrigée avant de remettre l'originale
         el.dataset.geminiCorrected = currentText;
         setElementText(el, originalText);
-        toggleBtn.innerHTML = 'Après';
-        toggleBtn.title = 'Voir la version corrigée';
+        toggleBtn.innerHTML = 'Apr\u00e8s';
+        toggleBtn.title = 'Voir la version corrig\u00e9e';
         statsDiv.style.display = 'none'; // Cache les stats en mode "Avant"
       } else {
         setElementText(el, el.dataset.geminiCorrected);

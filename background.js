@@ -71,7 +71,7 @@ async function updateTabState(tabId, url) {
     chrome.action.setBadgeText({ text: 'OFF', tabId });
     chrome.action.setBadgeBackgroundColor({ color: '#EF4444', tabId }); // Rouge rose
     chrome.action.setTitle({ 
-      title: `Correcteur Gemini Nano (Désactivé sur ${hostname})`, 
+      title: `Correcteur Gemini Nano (D\u00e9sactiv\u00e9 sur ${hostname})`, 
       tabId 
     });
   }
@@ -107,7 +107,7 @@ chrome.storage.onChanged.addListener(async (changes) => {
         }
       }
     } catch (e) {
-      console.error("Erreur lors de la mise à jour des onglets suite à un changement de stockage :", e);
+      console.error("Erreur lors de la mise \u00e0 jour des onglets suite \u00e0 un changement de stockage :", e);
     }
   }
 });
