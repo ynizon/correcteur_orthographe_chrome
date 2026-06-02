@@ -1,11 +1,35 @@
 console.log("🔍 Gemini Correcteur : Mode Dual-Button activé");
 
-let isEnabled = true;
+let isEnabled = false;
 const originalTexts = new Map();
 
+// Vérifie si le domaine actuel correspond à une exception
+function isDomainMatch(currentHost, exceptionDomain) {
+  if (!currentHost || !exceptionDomain) return false;
+  const current = currentHost.toLowerCase();
+  const target = exceptionDomain.toLowerCase();
+  return current === target || current.endsWith('.' + target);
+}
+
+// Détermine si l'extension doit être activée sur la page courante
+function checkEnabled(mode, domains) {
+  const currentHost = window.location.hostname;
+  if (!currentHost) return false;
+  
+  const isExcluded = domains.some(d => isDomainMatch(currentHost, d));
+  if (mode === 'whitelist') {
+    return isExcluded; // Active uniquement si présente dans la liste blanche
+  } else {
+    return !isExcluded; // Active partout sauf si présente dans la liste noire
+  }
+}
+
 // Initialisation de l'état
-chrome.storage.local.get('enabled').then((result) => {
-  isEnabled = result.enabled !== false;
+chrome.storage.local.get(['mode', 'domains']).then((result) => {
+  const mode = result.mode || 'blacklist';
+  const domains = result.domains || [];
+  
+  isEnabled = checkEnabled(mode, domains);
   if (isEnabled) {
     injectButtons();
   } else {
@@ -14,13 +38,21 @@ chrome.storage.local.get('enabled').then((result) => {
 });
 
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.enabled) {
-    isEnabled = changes.enabled.newValue;
-    if (isEnabled) {
-      injectButtons();
-    } else {
-      removeButtons();
-    }
+  if (changes.mode || changes.domains) {
+    chrome.storage.local.get(['mode', 'domains']).then((result) => {
+      const mode = result.mode || 'blacklist';
+      const domains = result.domains || [];
+      
+      const newEnabled = checkEnabled(mode, domains);
+      if (newEnabled !== isEnabled) {
+        isEnabled = newEnabled;
+        if (isEnabled) {
+          injectButtons();
+        } else {
+          removeButtons();
+        }
+      }
+    });
   }
 });
 

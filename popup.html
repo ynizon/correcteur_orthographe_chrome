@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correcteur Gemini Nano - Configuration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-glow"></div>
+        <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a9 9 0 0 1 9 9v0a9 9 0 0 1-9 9h-7a2 2 0 0 1-2-2v-7a9 9 0 0 1 9-9Z" />
+          <path d="M12 8v8" />
+          <path d="M8 12h8" />
+        </svg>
+      </div>
+      <div class="title-area">
+        <h1 id="app-title">Correcteur Gemini</h1>
+        <p class="subtitle">IA Locale On-Device</p>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-content">
+      <!-- Mode Selection Segment Control -->
+      <section class="section mode-selector-section">
+        <div class="segmented-control" role="radiogroup" aria-label="Mode de fonctionnement de l'extension">
+          <button id="mode-blacklist-btn" class="segment-btn active" role="radio" aria-checked="true">
+            <span class="segment-text">Actif partout</span>
+            <span class="segment-desc">Sauf exceptions</span>
+          </button>
+          <button id="mode-whitelist-btn" class="segment-btn" role="radio" aria-checked="false">
+            <span class="segment-text">Désactivé partout</span>
+            <span class="segment-desc">Sauf exceptions</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Current Site Context Card -->
+      <section class="section current-site-section">
+        <div class="card current-site-card">
+          <div class="card-header">
+            <span class="card-tag">Site Actuel</span>
+            <div id="current-status-indicator" class="status-indicator active">
+              <span class="status-dot"></span>
+              <span id="current-status-text">Actif</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h2 id="current-domain-text">chargement...</h2>
+            <button id="toggle-current-site-btn" class="btn btn-primary">
+              <span id="toggle-btn-icon" class="btn-icon">🚫</span>
+              <span id="toggle-btn-text">Désactiver sur ce site</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Exceptions List Panel -->
+      <section class="section exceptions-section">
+        <div class="section-header">
+          <h3 id="exceptions-title">Exceptions (Blacklist)</h3>
+          <span id="exceptions-count" class="count-badge">0</span>
+        </div>
+
+        <!-- Add Manual Exception -->
+        <div class="manual-add-container">
+          <input type="text" id="manual-domain-input" placeholder="Ajouter un domaine (ex: github.com)" autocomplete="off" spellcheck="false" />
+          <button id="add-manual-domain-btn" class="btn btn-secondary" title="Ajouter ce domaine aux exceptions">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
+
+        <!-- Search Exceptions -->
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Rechercher un domaine exclu..." autocomplete="off" spellcheck="false" />
+          <button id="clear-search-btn" class="clear-btn" style="display: none;">✕</button>
+        </div>
+
+        <!-- List Container -->
+        <div class="exceptions-list-container">
+          <ul id="exceptions-list" class="exceptions-list">
+            <!-- Dynamic elements will be inserted here -->
+          </ul>
+          
+          <!-- Empty State -->
+          <div id="empty-state" class="empty-state" style="display: none;">
+            <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p id="empty-state-text">Aucun domaine exclu pour le moment.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-links">
+        <span class="version-text">v1.1</span>
+        <span class="divider">•</span>
+        <a href="https://www.gameandme.fr" target="_blank" class="footer-link">Support & Aide</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
